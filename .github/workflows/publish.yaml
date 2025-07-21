@@ -1,0 +1,38 @@
+name: Publish to Reposilite
+
+on:
+  release:
+    types: [ published ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  JAVA-VERSION: "21"
+  JAVA-DISTRIBUTION: "zulu"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set version
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/*/} | sed "s/^v//")" >> $GITHUB_ENV
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA-DISTRIBUTION }}
+          java-version: ${{ env.JAVA-VERSION }}
+      - name: Gradle Wrapper Validation
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Gradle Build Action
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: |
+            publish
+            -Pversion=${{ env.RELEASE_VERSION }}
+            --stacktrace
+        env:
+          REPOSILITE_USERNAME: ${{ secrets.REPOSILITE_USERNAME }}
+          REPOSILITE_PASSWORD: ${{ secrets.REPOSILITE_PASSWORD }}

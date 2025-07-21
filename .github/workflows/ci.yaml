@@ -1,0 +1,40 @@
+name: CI
+on: [ push, pull_request ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  JAVA-VERSION: "21"
+  JAVA-DISTRIBUTION: "zulu"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA-DISTRIBUTION }}
+          java-version: ${{ env.JAVA-VERSION }}
+      - name: Gradle Wrapper Validation
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Gradle Build Action
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: |
+            test
+            build
+
+      - name: Post to a Slack channel
+        if: failure()
+        id: slack
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: 'C05PWAGTUFK' # Channel fint-kontroll-builds
+          slack-message: ":x: *Build Failed!* for repository *${{ github.repository }}* on branch *${{ github.ref }}*.
+          [View Details]: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
