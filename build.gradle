@@ -43,9 +43,9 @@ dependencies {
     implementation 'io.netty:netty-resolver-dns-native-macos:4.1.89.Final:osx-aarch_64'
     implementation 'no.fintlabs:fint-resource-server-security:1.1.0'
     implementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
-    api platform('io.micrometer:micrometer-tracing-bom:latest.release')
-    api 'io.micrometer:micrometer-tracing'
-    api 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation platform('io.micrometer:micrometer-tracing-bom:1.5.2')
+    implementation 'io.micrometer:micrometer-tracing'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     compileOnly 'org.projectlombok:lombok'
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
