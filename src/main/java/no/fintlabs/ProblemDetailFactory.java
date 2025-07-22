@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,7 +25,6 @@ public class ProblemDetailFactory {
         pd.setProperty("correlationId", getCorrelationId());
         pd.setProperty("applicationId", applicationId);
         pd.setProperty("path", request.getRequestURI());
-        pd.setProperty("timestamp", Instant.now());
         return pd;
     }
 
