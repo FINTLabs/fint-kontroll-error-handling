@@ -1,2 +1,6 @@
 fint:
   application-id: fint-kontroll-error-handling
+spring:
+  jackson:
+    problem-detail:
+      flatten: true
