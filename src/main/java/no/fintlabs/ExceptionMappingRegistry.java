@@ -22,8 +22,6 @@ public class ExceptionMappingRegistry {
         register(AuthenticationCredentialsNotFoundException.class, "missing-credentials", HttpStatus.UNAUTHORIZED);
         register(InsufficientAuthenticationException.class, "insufficient-authentication", HttpStatus.UNAUTHORIZED);
         register(IllegalArgumentException.class, "invalid-argument", HttpStatus.BAD_REQUEST);
-        register(ResourceNotFoundException.class, "resource-not-found", HttpStatus.NOT_FOUND);
-        register(ConflictException.class, "conflict", HttpStatus.CONFLICT);
     }
 
     private void register(Class<? extends Throwable> type, String identifier, HttpStatus status) {
