@@ -1,5 +1,6 @@
 package no.fintlabs;
 
+import lombok.Getter;
 import no.fintlabs.exception.ConflictException;
 import no.fintlabs.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import java.util.Optional;
 @Component
 public class ExceptionMappingRegistry {
 
+    @Getter
     private final Map<Class<? extends Throwable>, ExceptionDescriptor> mappings = new HashMap<>();
 
     public ExceptionMappingRegistry() {
