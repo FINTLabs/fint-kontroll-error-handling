@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
@@ -25,6 +26,16 @@ public class ProblemDetailFactory {
     @Autowired
     private ExceptionMappingRegistry registry;
 
+    /**
+     * Creates a {@link ProblemDetail} instance containing structured details about an exception.
+     * This method generates a problem detail object based on the provided exception and the HTTP request context.
+     * The object includes information such as HTTP status, exception details, correlation ID,
+     * application ID, timestamp, and URI information.
+     *
+     * @param ex the exception for which the problem detail is being created
+     * @param request the HTTP request from which contextual information is extracted
+     * @return a {@link ProblemDetail} object representing the structured error detail
+     */
     public ProblemDetail createProblemDetail(Throwable ex, HttpServletRequest request) {
         HttpStatus status = resolveStatus(ex);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, ex.getMessage());
@@ -62,7 +73,7 @@ public class ProblemDetailFactory {
 
     private String getCorrelationId() {
         if (tracer != null && tracer.currentSpan() != null) {
-            return tracer.currentSpan().context().traceId();
+            return Objects.requireNonNull(tracer.currentSpan()).context().traceId();
         }
         return UUID.randomUUID().toString();
     }

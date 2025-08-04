@@ -1,8 +1,6 @@
 package no.fintlabs;
 
 import lombok.Getter;
-import no.fintlabs.exception.ConflictException;
-import no.fintlabs.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -30,6 +28,15 @@ public class ExceptionMappingRegistry {
         mappings.put(type, new ExceptionDescriptor(identifier, status));
     }
 
+    /**
+     * Resolves the provided {@link Throwable} to an {@link ExceptionDescriptor} if a mapping exists.
+     * The resolution is based on the class of the exception or any of its assignable superclasses
+     * registered in the mappings.
+     *
+     * @param ex the exception to resolve
+     * @return an {@link Optional} containing the {@link ExceptionDescriptor} if a mapping exists,
+     *         or an empty {@link Optional} if no mapping is found
+     */
     public Optional<ExceptionDescriptor> resolve(Throwable ex) {
         return mappings.entrySet().stream()
                 .filter(entry -> entry.getKey().isAssignableFrom(ex.getClass()))
