@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -20,6 +22,8 @@ public class ExceptionMappingRegistry {
     public ExceptionMappingRegistry() {
         register(AccessDeniedException.class, "access-denied", HttpStatus.FORBIDDEN);
         register(AuthenticationCredentialsNotFoundException.class, "missing-credentials", HttpStatus.UNAUTHORIZED);
+        register(BadJwtException.class, "bad-jwt-token", HttpStatus.UNAUTHORIZED);
+        register(AuthenticationException.class, "authentication-exception", HttpStatus.UNAUTHORIZED);
         register(InsufficientAuthenticationException.class, "insufficient-authentication", HttpStatus.UNAUTHORIZED);
         register(IllegalArgumentException.class, "invalid-argument", HttpStatus.BAD_REQUEST);
     }
