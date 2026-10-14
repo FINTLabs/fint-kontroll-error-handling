@@ -8,11 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
+import org.springframework.web.ErrorResponse;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.Objects;
-import java.util.UUID;
 
 @Component
 public class ProblemDetailFactory {
@@ -37,13 +36,18 @@ public class ProblemDetailFactory {
      * @return a {@link ProblemDetail} object representing the structured error detail
      */
     public ProblemDetail createProblemDetail(Throwable ex, HttpServletRequest request) {
-        HttpStatus status = resolveStatus(ex);
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, ex.getMessage());
+        ProblemDetail pd;
+        if (ex instanceof ErrorResponse errorResponse) {
+            pd = errorResponse.getBody();
+        } else {
+            HttpStatus status = resolveStatus(ex);
+            pd = ProblemDetail.forStatusAndDetail(status, ex.getMessage());
+            pd.setTitle(status.getReasonPhrase());
+            pd.setType(getTypeUri(ex));
+        }
 
-        pd.setTitle(status.getReasonPhrase());
         pd.setInstance(URI.create(request.getRequestURI()));
-        pd.setType(getTypeUri(ex));
-        pd.setProperty("correlationId", getCorrelationId());
+        pd.setProperty("correlationId", CorrelationId.getOrCreate(request, tracer));
         pd.setProperty("applicationId", applicationId);
         pd.setProperty("timestamp", Instant.now().toString());
 
@@ -71,10 +75,4 @@ public class ProblemDetailFactory {
                 .orElse(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private String getCorrelationId() {
-        if (tracer != null && tracer.currentSpan() != null) {
-            return Objects.requireNonNull(tracer.currentSpan()).context().traceId();
-        }
-        return UUID.randomUUID().toString();
-    }
 }

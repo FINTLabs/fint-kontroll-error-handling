@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ProblemDetailFactory;
+import no.fintlabs.RequestBodyLogging;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -14,11 +15,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     private final ProblemDetailFactory factory;
+    private final RequestBodyLogging requestBodyLogging;
 
     /**
      * Handles all uncaught exceptions by creating and returning a structured problem detail response.
-     * This method logs the exception and constructs a {@link ProblemDetail} using the exception details
-     * and the HTTP request context.
+     * This method creates a {@link ProblemDetail} and logs the exception together with the request
+     * method, path, response status, correlation ID, and the request body.
      *
      * @param ex the uncaught exception to handle
      * @param request the HTTP request during which the exception occurred
@@ -26,12 +28,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Throwable.class)
     public ProblemDetail handleAll(Throwable ex, HttpServletRequest request) {
-        logError(ex);
-        return factory.createProblemDetail(ex, request);
-    }
-
-    private void logError(Throwable ex) {
-        log.error("Unhandled exception", ex);
+        ProblemDetail problem = factory.createProblemDetail(ex, request);
+        log.error("Request failed: method={}, path={}, status={}, correlationId={}, requestBody={}",
+                request.getMethod(), request.getRequestURI(), problem.getStatus(),
+                problem.getProperties().get("correlationId"), requestBodyLogging.format(request), ex);
+        return problem;
     }
 }
 
