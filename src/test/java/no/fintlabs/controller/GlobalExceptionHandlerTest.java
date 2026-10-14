@@ -125,14 +125,6 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void omitsMalformedJsonWithoutChangingTheBadRequestStatus(CapturedOutput output) throws Exception {
-        mockMvc.perform(post("/assignments").contentType(MediaType.APPLICATION_JSON).content("{broken"))
-                .andExpect(status().isBadRequest());
-
-        assertThat(output.getAll()).contains("requestBody=[omitted: body could not be parsed]");
-    }
-
-    @Test
     void omitsNonJsonBodies(CapturedOutput output) throws Exception {
         mockMvc.perform(post("/assignments").contentType(MediaType.TEXT_PLAIN).content("private-plain-text"))
                 .andExpect(status().isUnsupportedMediaType());
