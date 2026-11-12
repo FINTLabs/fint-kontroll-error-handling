@@ -7,13 +7,11 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.jwt.BadJwtException;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Component
 public class ExceptionMappingRegistry {
 
     @Getter
@@ -42,10 +40,13 @@ public class ExceptionMappingRegistry {
      *         or an empty {@link Optional} if no mapping is found
      */
     public Optional<ExceptionDescriptor> resolve(Throwable ex) {
-        return mappings.entrySet().stream()
-                .filter(entry -> entry.getKey().isAssignableFrom(ex.getClass()))
-                .map(Map.Entry::getValue)
-                .findFirst();
+        for (Class<?> type = ex.getClass(); type != null; type = type.getSuperclass()) {
+            ExceptionDescriptor descriptor = mappings.get(type);
+            if (descriptor != null) {
+                return Optional.of(descriptor);
+            }
+        }
+        return Optional.empty();
     }
 
     public record ExceptionDescriptor(String typeIdentifier, HttpStatus status) {}
