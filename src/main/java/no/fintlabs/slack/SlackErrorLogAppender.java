@@ -21,15 +21,15 @@ public class SlackErrorLogAppender extends AppenderBase<ILoggingEvent> {
 
     @Override
     protected void append(ILoggingEvent event) {
-        if (!event.getLevel().isGreaterOrEqual(Level.ERROR) || isDirectNotification(event)) {
+        if (!event.getLevel().isGreaterOrEqual(Level.ERROR) || isHttpErrorNotificationLog(event)) {
             return;
         }
 
         slackErrorNotifier.notifyErrorLog(event);
     }
 
-    private boolean isDirectNotification(ILoggingEvent event) {
+    private boolean isHttpErrorNotificationLog(ILoggingEvent event) {
         return event.getMarkerList() != null && event.getMarkerList().stream()
-                .anyMatch(marker -> marker.contains(SlackNotificationMarkers.NOTIFIED_DIRECTLY));
+                .anyMatch(marker -> marker.contains(SlackNotificationMarkers.HTTP_ERROR_NOTIFICATION_LOG));
     }
 }

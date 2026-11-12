@@ -3,7 +3,6 @@ package no.fintlabs.slack;
 import no.fintlabs.common.HttpErrorNotificationFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -12,7 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SlackErrorNotificationAutoConfigurationTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withInitializer(new ConfigDataApplicationContextInitializer())
             .withConfiguration(AutoConfigurations.of(SlackErrorNotificationAutoConfiguration.class));
 
     @Test
@@ -52,6 +50,29 @@ class SlackErrorNotificationAutoConfigurationTest {
                     assertThat(context).hasSingleBean(SlackErrorNotifier.class);
                     assertThat(ReflectionTestUtils.getField(context.getBean(SlackErrorNotifier.class), "grafanaUrl"))
                             .isEqualTo("");
+                    assertThat(ReflectionTestUtils.getField(context.getBean(SlackErrorNotifier.class), "applicationId"))
+                            .isEqualTo("fint-kontroll-error-handling");
+                    assertThat(ReflectionTestUtils.getField(context.getBean(SlackMessenger.class), "slackApiUrl"))
+                            .isEqualTo("https://slack.com/api/chat.postMessage");
+                    assertThat(ReflectionTestUtils.getField(context.getBean(SlackMessenger.class), "authorizedOrgId"))
+                            .isEqualTo("");
+                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(429)).isTrue();
+                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(422)).isTrue();
+                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(409)).isTrue();
+                });
+    }
+
+    @Test
+    void allowsExplicitlyEmptyAdditionalHttpStatuses() {
+        contextRunner.withPropertyValues(
+                "fint.kontroll.slack.enabled=true",
+                "fint.kontroll.slack.channel-id=C12345678",
+                "fint.kontroll.slack.bot-token=xoxb-test-token",
+                "fint.kontroll.slack.additional-http-statuses=")
+                .run(context -> {
+                    assertThat(context).hasSingleBean(SlackErrorNotifier.class);
+                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(429)).isFalse();
+                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(500)).isTrue();
                 });
     }
 
@@ -62,7 +83,10 @@ class SlackErrorNotificationAutoConfigurationTest {
                 "fint.kontroll.slack.channel-id=C12345678",
                 "fint.kontroll.slack.bot-token=xoxb-test-token",
                 "fint.kontroll.slack.grafana-url=https://grafana.example/logs",
+                "fint.kontroll.slack.api-url=https://slack.example/api",
+                "fint.kontroll.slack.additional-http-statuses=404",
                 "fint.application-id=role-catalog",
+                "fint.kontroll.authorization.authorized-org-id=consumer-org",
                 "POD_NAMESPACE=test-namespace")
                 .run(context -> {
                     assertThat(context).hasSingleBean(SlackMessenger.class);
@@ -73,7 +97,7 @@ class SlackErrorNotificationAutoConfigurationTest {
                     assertThat(ReflectionTestUtils.getField(context.getBean(SlackMessenger.class), "errorChannelId"))
                             .isEqualTo("C12345678");
                     assertThat(ReflectionTestUtils.getField(context.getBean(SlackMessenger.class), "slackApiUrl"))
-                            .isEqualTo("https://slack.com/api/chat.postMessage");
+                            .isEqualTo("https://slack.example/api");
                     assertThat(ReflectionTestUtils.getField(context.getBean(SlackMessenger.class), "botToken"))
                             .isEqualTo("xoxb-test-token");
                     assertThat(ReflectionTestUtils.getField(context.getBean(SlackMessenger.class), "authorizedOrgId"))
@@ -86,9 +110,8 @@ class SlackErrorNotificationAutoConfigurationTest {
                             .isEqualTo("role-catalog");
                     assertThat(ReflectionTestUtils.getField(context.getBean(SlackErrorNotifier.class), "namespace"))
                             .isEqualTo("test-namespace");
-                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(429)).isTrue();
-                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(422)).isTrue();
-                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(409)).isTrue();
+                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(404)).isTrue();
+                    assertThat(context.getBean(SlackErrorNotifier.class).shouldNotifyForHttpStatus(429)).isFalse();
                 });
     }
 }

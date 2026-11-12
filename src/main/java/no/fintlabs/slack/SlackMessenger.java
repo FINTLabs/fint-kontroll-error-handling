@@ -13,22 +13,22 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class SlackMessenger {
 
-    @Value("${fint.kontroll.slack.api-url}")
+    @Value("${fint.kontroll.slack.api-url:https://slack.com/api/chat.postMessage}")
     private String slackApiUrl;
 
-    @Value("${fint.kontroll.slack.bot-token}")
+    @Value("${fint.kontroll.slack.bot-token:}")
     private String botToken;
 
-    @Value("${fint.kontroll.slack.enabled}")
+    @Value("${fint.kontroll.slack.enabled:false}")
     private boolean slackEnabled;
 
-    @Value("${fint.kontroll.authorization.authorized-org-id}")
+    @Value("${fint.kontroll.authorization.authorized-org-id:}")
     private String authorizedOrgId;
 
-    @Value("${fint.application-id}")
+    @Value("${fint.application-id:fint-kontroll-error-handling}")
     private String app;
 
-    @Value("${fint.kontroll.slack.channel-id}")
+    @Value("${fint.kontroll.slack.channel-id:}")
     private String errorChannelId;
 
     private final RestTemplate restTemplate;

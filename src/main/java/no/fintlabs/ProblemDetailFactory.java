@@ -17,7 +17,7 @@ public class ProblemDetailFactory {
     @Autowired(required = false)
     private Tracer tracer;
 
-    @Value("${fint.application-id}")
+    @Value("${fint.application-id:fint-kontroll-error-handling}")
     private String applicationId;
 
     @Autowired

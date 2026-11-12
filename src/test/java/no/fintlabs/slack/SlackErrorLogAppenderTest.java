@@ -23,12 +23,12 @@ class SlackErrorLogAppenderTest {
     }
 
     @Test
-    void shouldNotDuplicateDirectNotifications() {
+    void shouldNotDuplicateHttpErrorNotifications() {
         SlackErrorNotifier notifier = mock(SlackErrorNotifier.class);
         SlackErrorLogAppender appender = new SlackErrorLogAppender(notifier);
         appender.start();
         LoggingEvent event = event(Level.ERROR);
-        event.addMarker(SlackNotificationMarkers.NOTIFIED_DIRECTLY);
+        event.addMarker(SlackNotificationMarkers.HTTP_ERROR_NOTIFICATION_LOG);
 
         appender.doAppend(event);
 

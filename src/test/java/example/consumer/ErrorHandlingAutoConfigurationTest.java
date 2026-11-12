@@ -9,8 +9,8 @@ import no.fintlabs.ResponseFilter;
 import no.fintlabs.controller.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,12 +19,13 @@ class ErrorHandlingAutoConfigurationTest {
     @Test
     void registersErrorHandlingOutsideTheLibraryPackageWithoutATracer() {
         new WebApplicationContextRunner()
-                .withInitializer(new ConfigDataApplicationContextInitializer())
                 .withBean(ObjectMapper.class, ObjectMapper::new)
                 .withConfiguration(AutoConfigurations.of(ErrorHandlingAutoConfiguration.class))
                 .run(context -> {
                     assertThat(context).hasSingleBean(ExceptionMappingRegistry.class);
                     assertThat(context).hasSingleBean(ProblemDetailFactory.class);
+                    assertThat(ReflectionTestUtils.getField(context.getBean(ProblemDetailFactory.class), "applicationId"))
+                            .isEqualTo("fint-kontroll-error-handling");
                     assertThat(context).hasSingleBean(RequestBodyLogging.class);
                     assertThat(context).hasSingleBean(ResponseFilter.class);
                     assertThat(context).hasSingleBean(GlobalExceptionHandler.class);

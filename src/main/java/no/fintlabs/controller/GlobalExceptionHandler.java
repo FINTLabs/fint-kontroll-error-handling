@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
         request.setAttribute(HttpErrorNotificationFilter.HANDLED_EXCEPTION_ATTRIBUTE, ex);
         request.setAttribute(HttpErrorNotificationFilter.CORRELATION_ID_ATTRIBUTE, correlationId);
         if (problem.getStatus() >= 500) {
-            log.error(SlackNotificationMarkers.NOTIFIED_DIRECTLY,
+            log.error(SlackNotificationMarkers.HTTP_ERROR_NOTIFICATION_LOG,
                     "Request failed: method={}, path={}, status={}, correlationId={}, exception={}, detail={}, requestBody={}",
                     request.getMethod(), request.getRequestURI(), problem.getStatus(),
                     correlationId, ex.getClass().getName(), problem.getDetail(), requestBodyLogging.format(request), ex);

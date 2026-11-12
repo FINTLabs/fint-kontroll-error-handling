@@ -9,7 +9,7 @@ import org.slf4j.MarkerFactory;
  */
 public final class SlackNotificationMarkers {
 
-    public static final Marker NOTIFIED_DIRECTLY = MarkerFactory.getMarker("SLACK_NOTIFIED_DIRECTLY");
+    public static final Marker HTTP_ERROR_NOTIFICATION_LOG = MarkerFactory.getMarker("SLACK_HTTP_ERROR_NOTIFICATION_LOG");
 
     private SlackNotificationMarkers() {
     }

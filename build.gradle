@@ -23,13 +23,6 @@ jar {
     enabled = true
 }
 
-processResources {
-    from('src/main/resources/application.yaml') {
-        into 'META-INF/fint-kontroll-error-handling'
-        rename { 'defaults.yaml' }
-    }
-}
-
 repositories {
     mavenLocal()
     maven {

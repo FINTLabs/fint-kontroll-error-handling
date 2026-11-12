@@ -1,8 +1,0 @@
-# Simulates a consuming application's own configuration file.
-spring:
-  application:
-    name: consuming-app
-fint:
-  kontroll:
-    authorization:
-      authorized-org-id: consumer-org

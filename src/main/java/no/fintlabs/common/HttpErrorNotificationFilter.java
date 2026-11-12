@@ -18,7 +18,6 @@ import java.io.IOException;
  * are deliberately left out unless their status is explicitly configured.
  */
 @Slf4j
-@Order(Ordered.LOWEST_PRECEDENCE)
 public class HttpErrorNotificationFilter extends OncePerRequestFilter {
 
     public static final String HANDLED_EXCEPTION_ATTRIBUTE =
@@ -45,7 +44,7 @@ public class HttpErrorNotificationFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
-            log.error(SlackNotificationMarkers.NOTIFIED_DIRECTLY,
+            log.error(SlackNotificationMarkers.HTTP_ERROR_NOTIFICATION_LOG,
                     "HTTP 500 {} {} exception={} detail={}", request.getMethod(), request.getRequestURI(),
                     exception.getClass().getSimpleName(), exception.getMessage(), exception);
             notifyIfNeeded(request, 500, exception);
@@ -66,7 +65,7 @@ public class HttpErrorNotificationFilter extends OncePerRequestFilter {
 
         if (exception == null) {
             if (status >= 500) {
-                log.error(SlackNotificationMarkers.NOTIFIED_DIRECTLY,
+                log.error(SlackNotificationMarkers.HTTP_ERROR_NOTIFICATION_LOG,
                         "HTTP {} {} {}", status, request.getMethod(), request.getRequestURI());
             } else {
                 log.warn("HTTP {} {} {}", status, request.getMethod(), request.getRequestURI());
