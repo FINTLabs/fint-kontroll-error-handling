@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -17,7 +16,6 @@ import java.io.IOException;
  * Adds the correlation id to the response header and logs.
  * Also makes the request body available for error logging.
  */
-@Component
 // Run after Spring Boot's observation filter and before security and application filters.
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class ResponseFilter extends OncePerRequestFilter {

@@ -9,6 +9,9 @@ import no.fintlabs.ExceptionMappingRegistry;
 import no.fintlabs.ProblemDetailFactory;
 import no.fintlabs.RequestBodyLogging;
 import no.fintlabs.ResponseFilter;
+import no.fintlabs.common.HttpErrorNotificationFilter;
+import no.fintlabs.slack.SlackErrorNotifier;
+import no.fintlabs.slack.SlackMessenger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +35,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -43,17 +48,22 @@ class GlobalExceptionHandlerTest {
 
     private MockMvc mockMvc;
     private Tracer tracer;
+    private SlackMessenger slackMessenger;
 
     @BeforeEach
     void setUp() {
         tracer = mock(Tracer.class);
+        slackMessenger = mock(SlackMessenger.class);
         ProblemDetailFactory factory = new ProblemDetailFactory();
         ReflectionTestUtils.setField(factory, "registry", new ExceptionMappingRegistry());
         ReflectionTestUtils.setField(factory, "applicationId", "role-catalog");
         ReflectionTestUtils.setField(factory, "tracer", tracer);
         RequestBodyLogging requestBodyLogging = new RequestBodyLogging(new ObjectMapper());
         mockMvc = MockMvcBuilders.standaloneSetup(new TestController())
-                .addFilters(new ResponseFilter(tracer, requestBodyLogging))
+                .addFilters(new ResponseFilter(tracer, requestBodyLogging),
+                        new HttpErrorNotificationFilter(new SlackErrorNotifier(
+                                slackMessenger, "https://grafana.example/logs", "role-catalog", "fintlabs-no",
+                                java.util.Set.of(429))))
                 .setControllerAdvice(new GlobalExceptionHandler(factory, requestBodyLogging))
                 .build();
     }
@@ -98,8 +108,10 @@ class GlobalExceptionHandlerTest {
             assertThat(correlationId).isEqualTo("1234567890abcdef");
         }
         assertThat(output.getAll()).contains(
-                "Request failed: method=POST, path=/assignments, status=409, correlationId=" + correlationId);
-        assertThat(output.getAll()).contains(
+                "Request failed: method=POST, path=/assignments, status=409, correlationId=" + correlationId
+                        + ", exception=org.springframework.web.server.ResponseStatusException,"
+                        + " detail=User already has assignments for this role., requestBody=");
+        assertThat(output.getAll()).doesNotContain(
                 "org.springframework.web.server.ResponseStatusException: 409 CONFLICT");
         assertThat(output.getAll()).contains(
                 "requestBody={\"accessRoleId\":\"role-123\",\"userId\":\"user-42\","
@@ -112,6 +124,40 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isConflict());
 
         assertThat(output.getAll()).contains("requestBody=[unavailable: body empty or not read]");
+    }
+
+    @Test
+    void notifiesForServerErrorsAndKeepsCorrelationId(CapturedOutput output) throws Exception {
+        MvcResult result = mockMvc.perform(post("/failed-assignments"))
+                .andExpect(status().isInternalServerError())
+                .andReturn();
+
+        String correlationId = new ObjectMapper().readTree(result.getResponse().getContentAsString())
+                .get("correlationId").asText();
+        verify(slackMessenger).sendErrorMessage(org.mockito.ArgumentMatchers.argThat(message ->
+                message.contains("Status:* `500`") && message.contains("Correlation ID:* `" + correlationId + "`")
+                        && message.contains("var-lineContains=" + correlationId)));
+        assertThat(output.getAll()).containsPattern("ERROR.*Request failed:.*status=500");
+        assertThat(output.getAll()).contains("java.lang.IllegalStateException: Unexpected failure");
+    }
+
+    @Test
+    void configuredClientStatusIsWarnWithContextAndStillNotifies(CapturedOutput output) throws Exception {
+        mockMvc.perform(post("/rate-limited-assignments"))
+                .andExpect(status().isTooManyRequests());
+
+        assertThat(output.getAll()).containsPattern("WARN.*Request failed:.*status=429");
+        assertThat(output.getAll()).contains(
+                "exception=org.springframework.web.server.ResponseStatusException, detail=Too many requests");
+        assertThat(output.getAll()).doesNotContain("ResponseStatusException: 429 TOO_MANY_REQUESTS");
+        verify(slackMessenger).sendErrorMessage(org.mockito.ArgumentMatchers.argThat(message ->
+                message.contains("Status:* `429`")));
+    }
+
+    @Test
+    void doesNotNotifyForOrdinaryClientErrors() throws Exception {
+        mockMvc.perform(post("/assignments")).andExpect(status().isConflict());
+        verify(slackMessenger, never()).sendErrorMessage(org.mockito.ArgumentMatchers.anyString());
     }
 
     @Test
@@ -154,6 +200,16 @@ class GlobalExceptionHandlerTest {
         @PostMapping("/successful-assignments")
         public Map<String, Object> successfulAssignment(@RequestBody Map<String, Object> body) {
             return body;
+        }
+
+        @PostMapping("/failed-assignments")
+        public void fail() {
+            throw new IllegalStateException("Unexpected failure");
+        }
+
+        @PostMapping("/rate-limited-assignments")
+        public void rateLimited() {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Too many requests");
         }
     }
 }

@@ -6,6 +6,7 @@ import no.fintlabs.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 
 import java.util.Optional;
 
@@ -44,6 +45,16 @@ public class ExceptionMappingRegistryTest {
         ExceptionDescriptor descriptor = result.get();
         assertEquals("access-denied", descriptor.typeIdentifier());
         assertEquals(HttpStatus.FORBIDDEN, descriptor.status());
+    }
+
+    @Test
+    public void resolvesTheMostSpecificRegisteredException() {
+        ExceptionMappingRegistry registry = new ExceptionMappingRegistry();
+
+        ExceptionDescriptor descriptor = registry.resolve(
+                new InsufficientAuthenticationException("Authentication required")).orElseThrow();
+
+        assertEquals("insufficient-authentication", descriptor.typeIdentifier());
     }
 
     @Test

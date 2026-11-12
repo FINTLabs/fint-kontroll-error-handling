@@ -7,19 +7,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.stereotype.Component;
 import org.springframework.web.ErrorResponse;
 
 import java.net.URI;
 import java.time.Instant;
 
-@Component
 public class ProblemDetailFactory {
 
     @Autowired(required = false)
     private Tracer tracer;
 
-    @Value("${fint.application-id}")
+    @Value("${fint.application-id:fint-kontroll-error-handling}")
     private String applicationId;
 
     @Autowired

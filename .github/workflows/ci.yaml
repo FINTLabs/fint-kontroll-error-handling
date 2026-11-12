@@ -27,14 +27,3 @@ jobs:
           arguments: |
             test
             build
-
-      - name: Post to a Slack channel
-        if: failure()
-        id: slack
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          channel-id: 'C05PWAGTUFK' # Channel fint-kontroll-builds
-          slack-message: ":x: *Build Failed!* for repository *${{ github.repository }}* on branch *${{ github.ref }}*.
-          [View Details]: ${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

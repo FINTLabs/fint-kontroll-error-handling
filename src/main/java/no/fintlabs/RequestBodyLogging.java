@@ -6,13 +6,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
 
-@Component
 @RequiredArgsConstructor
 public class RequestBodyLogging {
 
